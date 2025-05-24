@@ -1,0 +1,31 @@
+# Object files
+*.o
+*.mod
+*.MOD
+
+# Executables and binaries
+*.exe
+*.out
+*.a
+*.so
+*.dll
+
+# CMake build directory
+/build/
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+# Editor/IDE files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+*.log
+
+# Backup files
+*#
+*.bak
+*.tmp
