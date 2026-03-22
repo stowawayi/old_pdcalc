@@ -17,8 +17,13 @@ c     read a files of ground range, hob, yld, vn, tgttype, k-factor
 
       dimension pd(2)
 c
-c  cep   circular error probable for weapon (km)
-c  r95   95% of damage radius lies within this area (km)
+c  sig_cr     cross-range delivery 1-sigma (km)
+c  sig_dr     down-range  delivery 1-sigma (km)
+c  sig_hob    hob delivery 1-sigma (ft)
+c  rho_cr_dr  cross-range/down-range correlation
+c  rho_cr_hob cross-range/hob correlation
+c  rho_dr_hob down-range/hob  correlation
+c  r95        95% of target area lies within this radius (km)
 c  gname file name containing ground range, altitude and yield data
 c  ivns  starting vn #
 c  ivne  ending vn #
@@ -43,8 +48,8 @@ c  mode  which read to use
 c  gamma reentry angle assumed 
 c  az    azimuth iin degrees from dgz to target
 c
-      namelist /plst/ cep,r95,gname,ivns,ivne,ivnd,jti,kfi,iflg,
-     *  mode,gamma,az
+      namelist /plst/ sig_cr,sig_dr,sig_hob,rho_cr_dr,rho_cr_hob,
+     *  rho_dr_hob,r95,gname,ivns,ivne,ivnd,jti,kfi,iflg,mode,gamma,az
 
       sq   = char(39)
 
@@ -85,9 +90,14 @@ c
       kfi   = '0'
       iflg  = 2
 
-      cep   = zero
-      r95   = zero
-      iflg  = 0
+      sig_cr     = zero
+      sig_dr     = zero
+      sig_hob    = zero
+      rho_cr_dr  = zero
+      rho_cr_hob = zero
+      rho_dr_hob = zero
+      r95        = zero
+      iflg       = 0
 
       mode   = 1
 
@@ -100,14 +110,15 @@ c
 
       close (unit=lin)
 
-c  convert to feet
+c  convert horizontal sigmas from km to feet; sig_hob already in feet
 
-      cep = cep * ckm2ft
-      r95 = r95 * ckm2ft
+      sig_cr = sig_cr * ckm2ft
+      sig_dr = sig_dr * ckm2ft
+      r95    = r95 * ckm2ft
 
 c  convert r95 to nautical miles
 
-      r95   = r95 / cnm2ft
+      r95 = r95 / cnm2ft
 
       gamma = gamma / dpr
 
@@ -161,14 +172,24 @@ c  for y and z target types force ground bursts
       write(13,*)grn,hob,yld
       call flush(13)
 
-c  compute pd with and without cep effects
+c  compute pd with and without delivery error effects
 
       do j=1,2
          if(j.eq.1) then
-            xcep = zero
+            xscr = zero
+            xsdr = zero
+            xshb = zero
+            xrcd = zero
+            xrch = zero
+            xrdh = zero
             xr95 = zero
          else
-            xcep = cep
+            xscr = sig_cr
+            xsdr = sig_dr
+            xshb = sig_hob
+            xrcd = rho_cr_dr
+            xrch = rho_cr_hob
+            xrdh = rho_dr_hob
             xr95 = r95
          endif
 
@@ -176,7 +197,8 @@ c  compute pd with and without cep effects
          wr  = 0.0d0
          pod = 0.0d0
 
-         call pdcalc(iv,jti,kfi,yld,hof,xr95,xcep,d,wr,pod,iflg,az)
+         call pdcalc(iv,jti,kfi,yld,hof,xr95,xscr,xsdr,xshb,xrcd,
+     *               xrch,xrdh,d,wr,pod,iflg,az)
 
          pd(j) = max(smalpk,pod)
       enddo
@@ -218,13 +240,19 @@ c  if tgt flown to ground
       d = grf / cnm2ft
 
       xr95 = zero
-      xcep = zero
+      xscr = zero
+      xsdr = zero
+      xshb = zero
+      xrcd = zero
+      xrch = zero
+      xrdh = zero
 
       d   = 0.0d0
       wr  = 0.0d0
       pod = 0.0d0
 
-      call pdcalc(iv,jti,kfi,yld,hof,xr95,xcep,d,wr,pod,iflg,az)
+      call pdcalc(iv,jti,kfi,yld,hof,xr95,xscr,xsdr,xshb,xrcd,
+     *            xrch,xrdh,d,wr,pod,iflg,az)
 
       write(2,50)grn,hob,yld,iv,jti,kfi,wr/ckm2ft,pod
 

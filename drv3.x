@@ -7,9 +7,14 @@
       include "files.h"
       include 'cdkwr.h'
 
-c  yld   yield (kt)
-c  hobi  height of burst for evaluation (ft)
-c  cep   circular error probable for weapon (km)
+c  yld        yield (kt)
+c  hobi       height of burst for evaluation (ft)
+c  sig_cr     cross-range delivery 1-sigma (km)
+c  sig_dr     down-range  delivery 1-sigma (km)
+c  sig_hob    hob delivery 1-sigma (ft)
+c  rho_cr_dr  cross-range/down-range correlation
+c  rho_cr_hob cross-range/hob correlation
+c  rho_dr_hob down-range/hob  correlation
 c  fname name of reformatted RISOP file
 
 c        fields (can be read free format since no character data)
@@ -26,7 +31,8 @@ c                  jti    type (e.g. p,q,r....) N.B. MUST BE LOWER CASE
 c                  kfi    k-factor
 
 
-      namelist /plst/ yld,hobi,cep,fname
+      namelist /plst/ yld,hobi,sig_cr,sig_dr,sig_hob,
+     *  rho_cr_dr,rho_cr_hob,rho_dr_hob,fname
 
       call acon
 
@@ -37,7 +43,12 @@ c                  kfi    k-factor
 
       yld = 300.0d0
       hobi = 0.0d0
-      cep  = 3.00d0
+      sig_cr     = 0.0d0
+      sig_dr     = 0.0d0
+      sig_hob    = 0.0d0
+      rho_cr_dr  = 0.0d0
+      rho_cr_hob = 0.0d0
+      rho_dr_hob = 0.0d0
 
       nname = 'drv3.nml'
       fname = 'good'
@@ -74,7 +85,8 @@ c                  kfi    k-factor
       wr  = 0.0d0
       pod = 0.0d0
 
-      call pdcalc(ivn,jti,kfi,yld,hobi,r95,cep,d,wr,pod,iflg,az)
+      call pdcalc(ivn,jti,kfi,yld,hobi,r95,sig_cr,sig_dr,sig_hob,
+     *            rho_cr_dr,rho_cr_hob,rho_dr_hob,d,wr,pod,iflg,az)
 
       write(6,10)xlon,xlat,r95,ivn,jti,kfi,wr,pod
 

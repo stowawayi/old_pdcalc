@@ -7,9 +7,14 @@
       include "files.h"
       include 'cdkwr.h'
 
-c  hobi  height of burst for evaluation (ft)
-c  cep   circular error probable for weapon (km)
-c  r95   95% of damage radius lies within this area (km)
+c  hobi       height of burst for evaluation (ft)
+c  sig_cr     cross-range delivery 1-sigma (km)
+c  sig_dr     down-range  delivery 1-sigma (km)
+c  sig_hob    hob delivery 1-sigma (ft)
+c  rho_cr_dr  cross-range/down-range correlation
+c  rho_cr_hob cross-range/hob correlation
+c  rho_dr_hob down-range/hob  correlation
+c  r95        95% of target area lies within this radius (km)
 c  gname file name containing ground range, altitude and yield data
 c  ivnb  starting vn #
 c  ivne  ending vn #
@@ -20,7 +25,8 @@ c        the end value will be min(ivn-1,9)
 c  kfs   k-factor step (typicall 1)
 c  az    azimuth iin degrees from dgz to target
 
-      namelist /plst/ ivnb,ivne,ivns,jti,kfb,kfs,yld,hobi,r95,cep,az
+      namelist /plst/ ivnb,ivne,ivns,jti,kfb,kfs,yld,hobi,r95,
+     *  sig_cr,sig_dr,sig_hob,rho_cr_dr,rho_cr_hob,rho_dr_hob,az
 
       lin  =  1
       lout =  6
@@ -41,8 +47,13 @@ c  az    azimuth iin degrees from dgz to target
       yld  = 1000.0d0
       hobi = 0.0d0
 
-      r95  = 5.0d0
-      cep  = 0.0d0
+      r95        = 5.0d0
+      sig_cr     = 0.0d0
+      sig_dr     = 0.0d0
+      sig_hob    = 0.0d0
+      rho_cr_dr  = 0.0d0
+      rho_cr_hob = 0.0d0
+      rho_dr_hob = 0.0d0
 
       az   = 0.0d0
 
@@ -82,7 +93,8 @@ c  az    azimuth iin degrees from dgz to target
             wr  = 0.0d0
             pod = 0.0d0
 
-            call pdcalc(ivn,jti,kfi,yld,hobi,r95,cep,
+            call pdcalc(ivn,jti,kfi,yld,hobi,r95,sig_cr,sig_dr,
+     *                  sig_hob,rho_cr_dr,rho_cr_hob,rho_dr_hob,
      *                  d,wr,pod,iflg,az)
 
             write(10,20)ivn,kf,avn,d,wr,pod
@@ -104,7 +116,8 @@ c  az    azimuth iin degrees from dgz to target
             do while (podi.le.1.0d0)
 
                pod = podi
-               call pdcalc(ivn,jti,kfi,yld,hobi,r95,cep,
+               call pdcalc(ivn,jti,kfi,yld,hobi,r95,sig_cr,sig_dr,
+     *                     sig_hob,rho_cr_dr,rho_cr_hob,rho_dr_hob,
      *                     d,wr,pod,iflg,az)
 
                write(11,30)ivn,kf,avn,d,wr,pod,icnt

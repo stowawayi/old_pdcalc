@@ -12,7 +12,7 @@
       include "files.h"
       include 'cdkwr.h'
 
-      dimension ylda(mxmsl),cepa(mxmsl)
+      dimension ylda(mxmsl),scra(mxmsl)
 
 c  iname  filename containing icbm information
 c         this file requires a strict format as follows
@@ -26,7 +26,8 @@ c                 nsoft  # of missiles in/on soft launchers (future use)
 c                 hnard  # of missiles in/on hard launchers (future use)
 c                 yld    yield (Kt)
 c                 rmax   maximum range (km) (future use)
-c                 cep    cep of missile (ft)
+c                 sig_cr cross-range delivery 1-sigma of missile (nmi in file,
+c                        stored as feet)
 c                 numwh  # of warheads of this type/missile (future use)
 c  tname  filename containing the target types, r95, vntk broken down
 c         this file requires a strict format as follows
@@ -46,7 +47,14 @@ c  hob1   ending hob (ft)
 c  dhob   hob step size (ft)
 
 
-      namelist /plst/ iname,tname,hob0,hob1,dhob
+c  sig_dr_ratio  sig_dr / sig_cr ratio (default 1.0 = isotropic)
+c  sig_hob       hob delivery 1-sigma (ft, default 0)
+c  rho_cr_dr     cross-range/down-range correlation (default 0)
+c  rho_cr_hob    cross-range/hob correlation (default 0)
+c  rho_dr_hob    down-range/hob  correlation (default 0)
+c
+      namelist /plst/ iname,tname,hob0,hob1,dhob,
+     *  sig_dr_ratio,sig_hob,rho_cr_dr,rho_cr_hob,rho_dr_hob
 
       call acon
 
@@ -58,9 +66,14 @@ c  dhob   hob step size (ft)
       iname = "ussr.dat"
       tname = "types.tgt"
 
-      hob0  =     0.0d0
-      hob1  = 10000.0d0
-      dhob  =   200.0d0
+      hob0         =    0.0d0
+      hob1         = 10000.0d0
+      dhob         =   200.0d0
+      sig_dr_ratio =    1.0d0
+      sig_hob      =    0.0d0
+      rho_cr_dr    =    0.0d0
+      rho_cr_hob   =    0.0d0
+      rho_dr_hob   =    0.0d0
 
       fname = 'drv4.nml'
 
@@ -86,7 +99,7 @@ c  dhob   hob step size (ft)
 
       open (unit=16,status='unknown',file='drv4.out')
 
-c  read in missile types, yields, cep,....
+c  read in missile types, yields, sig_cr (nmi in file),...
 
       open (unit=1,status='old',file=iname)
 
@@ -95,7 +108,7 @@ c  read in missile types, yields, cep,....
       nmsl = 0
 
  333  read(1,20,end=444)tnato,tussr,nsoft,nhard,
-     *                  yld,rmax,cep,numwh
+     *                  yld,rmax,sig_cr,numwh
 
       if (rmax.lt.7000.0d0)goto 333
 
@@ -104,7 +117,7 @@ c  read in missile types, yields, cep,....
       nato(nmsl) = tnato
       ussr(nmsl) = tussr
       ylda(nmsl) = yld
-      cepa(nmsl) = cep * cnm2ft
+      scra(nmsl) = sig_cr * cnm2ft
 
       goto 333
 
@@ -130,18 +143,21 @@ c  convert to lower case
       endif
 
       do imsl=1,nmsl
-         yld = ylda(imsl)
-         cep = cepa(imsl)
-         hob = hob0
+         yld    = ylda(imsl)
+         sig_cr = scra(imsl)
+         sig_dr = sig_cr * sig_dr_ratio
+         hob    = hob0
 
          do while (hob.le.hob1)
             d   = 0.0d0
             wr  = 0.0d0
             pod = 0.0d0
 
-            call pdcalc(ivn,jti,kfi,yld,hob,r95,cep,d,wr,pod,iflg,az)
+            call pdcalc(ivn,jti,kfi,yld,hob,r95,sig_cr,sig_dr,
+     *                  sig_hob,rho_cr_dr,rho_cr_hob,rho_dr_hob,
+     *                  d,wr,pod,iflg,az)
 
-            write(16,40)avn,hob,yld,cep,r95,wr,pod,ivn,jti,kfi,imsl
+            write(16,40)avn,hob,yld,sig_cr,r95,wr,pod,ivn,jti,kfi,imsl
 
             hob = hob + dhob
          enddo

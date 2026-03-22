@@ -1,7 +1,7 @@
-      subroutine etcalc(iv,jt,kf,yld,cep,hob1,orien,azmth,di,pod,wr,
-     *  ierr)
+      subroutine etcalc(iv,jt,kf,yld,scr,sdr,hob1,orien,azmth,di,pod,
+     *  wr,ierr)
 
-c  compute probability of damage for equivalent target area (eta) type 
+c  compute probability of damage for equivalent target area (eta) type
 c  targets
 c
 c  inputs
@@ -9,9 +9,10 @@ c        iv     vulnerability number
 c        jt     target type
 c        kf     k-factor
 c        yld    weapon yield (kt)
-c        cep    circular error probable (feet)
+c        scr    cross-range delivery 1-sigma (feet)
+c        sdr    down-range delivery 1-sigma (feet)
 c        hob1   height of burst (feet)
-c        orien  
+c        orien
 c        azmth
 c
 c  inputs/outputs
@@ -39,7 +40,13 @@ c        ierr   error status
       p(b,c,d,e,f,g,h,a) = (erfp(d,e) - erfp(b,c)) * 
      *                     (erfp(h,a) - erfp(f,g))
 
-      acep(a,b) = sqrt(cep * cep + (1.1774d0 * a * b)**2) / 1.1774d0
+c  acep_w: effective combined sigma for target width dimension (cross-range)
+c  acep_l: effective combined sigma for target length dimension (down-range)
+c    a = weapon radius (feet), b = damage sigma
+c    the delivery sigma (scr or sdr) replaces the old scalar cep/1.1774
+c
+      acep_w(a,b) = sqrt(scr*scr + (1.1774d0 * a * b)**2) / 1.1774d0
+      acep_l(a,b) = sqrt(sdr*sdr + (1.1774d0 * a * b)**2) / 1.1774d0
 
       data inw/
 
@@ -296,9 +303,9 @@ c  compute boundaries
 
 c  compute delivery sigmas
 
-      aa = acep(wrw1,dswv(kk,jts))
+      aa = acep_w(wrw1,dswv(kk,jts))
       ab = aa
-      ac = acep(wrl1,dslv(1,kk,jts))
+      ac = acep_l(wrl1,dslv(1,kk,jts))
       ad = ac
 
 c  compute pod
@@ -365,7 +372,7 @@ c  compute boundaries
       a  = -w / 2.0d0 - wrw1 + xo
       b  =  w / 2.0d0 + wrw1 + xo
 
-      aa = acep(wrw1,dswv(kk,jts))
+      aa = acep_w(wrw1,dswv(kk,jts))
       ab = aa
 
       if(inl(2,kk,jts).gt.0)goto 210
@@ -373,14 +380,14 @@ c  compute boundaries
       c  = -sl / 2.0d0 - wrl1 + yo
       d  =  sl / 2.0d0 + wrl2 + yo
 
-      ac = acep(wrl1,dslv(1,kk,jts))
-      ad = acep(wrl2,dslv(2,kk,jts))
+      ac = acep_l(wrl1,dslv(1,kk,jts))
+      ad = acep_l(wrl2,dslv(2,kk,jts))
       goto 220
 
  210  c   = -sl / 2.0d0 - wrl2 + yo
       d   =  sl / 2.0d0 + wrl1 + yo
-      ac  =  acep(wrl2,dslv(2,kk,jts))
-      ad  =  acep(wrl1,dslv(1,kk,jts))
+      ac  =  acep_l(wrl2,dslv(2,kk,jts))
+      ad  =  acep_l(wrl1,dslv(1,kk,jts))
 
  220  poc = p(a,aa,b,ab,c,ac,d,ad)
       return
@@ -442,9 +449,9 @@ c  compute boundaries
  310  a   = -wrw1 + w / 2.0d0 + xo
       b   =  wrl1 - w / 2.0d0 + xo
 c
- 320  aa  = acep(wrw1,dswv(kk,jts))
-      ab  = acep(wrl1,dslv(2,kk,jts))
-      ac  = acep(sl/2.0,dslv(1,kk,jts))
+ 320  aa  = acep_w(wrw1,dswv(kk,jts))
+      ab  = acep_w(wrl1,dslv(2,kk,jts))
+      ac  = acep_l(sl/2.0,dslv(1,kk,jts))
       ad  = ac
 
       pod = p(a,aa,b,ab,c,ac,d,ad)
@@ -480,9 +487,9 @@ c  compute boundaries
       c   = -sl / 2.0d0 - wrl1 + yo
       d   =  sl / 2.0d0 + wrl1 + yo
 
-      aa  = acep(wrw1,dswv(kk,jts))
+      aa  = acep_w(wrw1,dswv(kk,jts))
       ab  = aa
-      ac  = acep(wrw1,dslv(1,kk,jts))
+      ac  = acep_l(wrw1,dslv(1,kk,jts))
       ad  = ac
 
       pod = p(a,aa,b,ab,c,ac,d,ad)

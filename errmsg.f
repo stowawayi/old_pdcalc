@@ -1,4 +1,5 @@
-      subroutine errmsg(ierr,iv,jt,kf,yld,cep,hob1,r95,d,wr,pod,iflg)
+      subroutine errmsg(ierr,iv,jt,kf,yld,scr,sdr,shob,rcd,rch,rdh,
+     *                  hob1,r95,d,wr,pod,iflg)
 
       include "real8.h"
       include "const.h"
@@ -48,10 +49,13 @@ c
  120  write(ldbg,121)
  121  format(' shob > 1000 ft')
 c
- 999  shob=hob1/yld**third
-      write(ldbg,1000)iv,jt,kf,yld,cep,hob1,r95,d,wr,pod,iflg,shob
+ 999  shob_n=hob1/yld**third
+      write(ldbg,1000)iv,jt,kf,yld,scr,sdr,shob,rcd,rch,rdh,
+     *  hob1,r95,d,wr,pod,iflg,shob_n
  1000 format(' iv: ',i3,' jt: ',i2,' kf: ',i2,' yld: ',f10.3,/,
-     *  ' cep: ',f10.3,' hob1: ',f10.3,' r95: ',f10.3,' d: ',f10.3,/,
-     *  ' wr: ',f10.3,' pod: ',f10.6,' iflg: ',i8,' shob: ',f10.3,/)
+     *  ' scr: ',f10.3,' sdr: ',f10.3,' shob: ',f10.3,/,
+     *  ' rcd: ',f7.4,' rch: ',f7.4,' rdh: ',f7.4,/,
+     *  ' hob1: ',f10.3,' r95: ',f10.3,' d: ',f10.3,/,
+     *  ' wr: ',f10.3,' pod: ',f10.6,' iflg: ',i8,' shob_n: ',f10.3,/)
       return
       end

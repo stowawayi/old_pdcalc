@@ -3,13 +3,16 @@ PROGRAM=	main
 OBJECTS=	main.o \
 		acon.o \
 		dypres.o \
+		eigen2x2.o \
 		errmsg.o \
 		etcalc.o \
 		intgf.o \
 		lncalc.o \
+		lncov.o \
 		ogh.o \
 		overp.o \
 		pdcalc.o \
+		pvuln.o \
 		ranf.o \
 		wrcalc.o \
 		wrclcy.o \
@@ -32,13 +35,16 @@ $(PROGRAM):	$(OBJECTS)
 main.o:	main.for\
 	acon.f \
 	dypres.f \
+	eigen2x2.f \
 	errmsg.f \
 	etcalc.f \
 	intgf.f \
 	lncalc.f \
+	lncov.f \
 	ogh.f \
 	overp.f \
 	pdcalc.f \
+	pvuln.f \
 	ranf.f \
 	wrcalc.f \
 	wrclcy.f \
@@ -74,7 +80,18 @@ etcalc.o:	etcalc.f
 intgf.o:	intgf.f
 	$(F77) $(INCLUDES) $(FLAGS) -c $<
 
+eigen2x2.o:	eigen2x2.f
+	$(F77) $(INCLUDES) $(FLAGS) -c $<
+
 lncalc.o:	lncalc.f
+	$(F77) $(INCLUDES) $(FLAGS) -c $<
+
+lncov.o:	lncov.f \
+	const.h \
+	files.h
+	$(F77) $(INCLUDES) $(FLAGS) -c $<
+
+pvuln.o:	pvuln.f
 	$(F77) $(INCLUDES) $(FLAGS) -c $<
 
 ogh.o:	ogh.f \

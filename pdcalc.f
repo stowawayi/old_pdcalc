@@ -1,5 +1,5 @@
-      subroutine pdcalc(iv,jti,kfi,yld,hob1,r95,cep,d,wr,pod,iiflg,
-     *   azmth)
+      subroutine pdcalc(iv,jti,kfi,yld,hob1,r95,scr,sdr,shob,
+     *   rcd,rch,rdh,d,wr,pod,iiflg,azmth)
 c
 c  compute damage levels or associated values
 c
@@ -13,10 +13,15 @@ c            (0-9 for p and q type)
 c            (a-p for x type)
 c   yld      weapon yield (kt)
 c   hob1     height of burst of weapon (feet)
-c   r95      radius of a circle encompassing 95 percent of the 
+c   r95      radius of a circle encompassing 95 percent of the
 c            circular normal target area (nmi)
 c            for eta targets r95*10 = orientation of the target (degrees)
-c   cep      circular error probable of the specified weapon system (feet)
+c   scr      cross-range delivery 1-sigma (feet)
+c   sdr      down-range delivery 1-sigma (feet)
+c   shob     hob delivery 1-sigma (feet)
+c   rcd      cross-range / down-range correlation
+c   rch      cross-range / hob correlation
+c   rdh      down-range  / hob correlation
 c
 c  inputs/outputs
 c   d        distance from dgz to target (nmi)
@@ -47,7 +52,7 @@ c      9   compute pod               all             input      in-pod    in-wr
 c                                                               out-pod   out-wr
 c
 c   azmth   azimuth in degrees from dgz to target
-c              
+c
       include "real8.h"
       character*1 jt,kft,kfi,jti,kfn,jtd
       include 'cdkpd.h'
@@ -60,16 +65,16 @@ c
      *              'm',   'n',   'o',   'z',   'y',   'a',   'b',
      *              'c',   'd',   'e',   'f',   'x'/
 
-      data jjtd /    2 ,    2 ,    2 ,    2 ,    2 ,    1 ,    1 , 
-     *               1 ,    1 ,    1 ,    4 ,    4 ,    5 ,    6 , 
+      data jjtd /    2 ,    2 ,    2 ,    2 ,    2 ,    1 ,    1 ,
+     *               1 ,    1 ,    1 ,    4 ,    4 ,    5 ,    6 ,
      *               7 ,    8 ,    9 ,   10 ,    3/
 
-      data ddsig /0.1d0, 0.2d0, 0.3d0, 0.4d0, 0.5d0, 0.1d0, 0.2d0, 
-     *            0.3d0, 0.4d0, 0.5d0, 0.3d0, 0.3d0, 10.d0, 10.d0, 
+      data ddsig /0.1d0, 0.2d0, 0.3d0, 0.4d0, 0.5d0, 0.1d0, 0.2d0,
+     *            0.3d0, 0.4d0, 0.5d0, 0.3d0, 0.3d0, 10.d0, 10.d0,
      *            10.d0, 10.d0, 10.d0, 10.d0, 10.0d0/
 
-      data kfn /'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 
-     *          'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 
+      data kfn /'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+     *          'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
      *          'k', 'l', 'm', 'n', 'o', 'p', 'q'/
 
       data kff / 0 , 1 , 2 , 3 , 4 , 5 , 6 , 7 , 8 , 9 , 1 , 2 ,
@@ -167,7 +172,18 @@ c  overpressure, dynamic pressure and crater type vn's
       pod = zero
       return
 
- 20   call lncalc(cep,dsig,wr,r95,pod,d,iflh,ierr)
+c  compute hob sensitivity d(wr)/d(hob) for lncov via central difference
+
+ 20   alpha = zero
+      if (shob .gt. zero) then
+         dhob  = max(1.0d0, 1.0d-3 * abs(hob1))
+         call wrcalc(yld,hob1+dhob,iv,jjt,kf,dsig,wrp,ierri)
+         call wrcalc(yld,hob1-dhob,iv,jjt,kf,dsig,wrm,ierri)
+         alpha = (wrp - wrm) / (2.0d0 * dhob)
+      endif
+
+      call lncov(scr,sdr,shob,rcd,rch,rdh,dsig,wr,alpha,
+     *           r95,pod,d,azmth,iflh,ierr)
 
       if (ierr.ne.0)goto 990
 
@@ -184,7 +200,7 @@ c  eta type vntk
 
  110  jts = jjt - 4
 
-      call etcalc(iv,jts,kf,yld,cep,hob1,r95,azmth,d,pod,wr,ierr)
+      call etcalc(iv,jts,kf,yld,scr,sdr,hob1,r95,azmth,d,pod,wr,ierr)
 
       if (ierr.ne.0)goto 990
 
@@ -225,7 +241,18 @@ c  invalid jt='y' vntk; set pod,wr and or d to zero and return
       if (ierr.ne.0)goto 990
       if (iflg.eq.4)return
 
-      call lncalc(cep,dsig,wr,r95,pod,d,iflh,ierr)
+c  compute hob sensitivity for wrpers via central difference
+
+      alpha = zero
+      if (shob .gt. zero) then
+         dhob  = max(1.0d0, 1.0d-3 * abs(hob1))
+         call wrpers(yld,hob1+dhob,kf,dsig,wrp,ierri)
+         call wrpers(yld,hob1-dhob,kf,dsig,wrm,ierri)
+         alpha = (wrp - wrm) / (2.0d0 * dhob)
+      endif
+
+      call lncov(scr,sdr,shob,rcd,rch,rdh,dsig,wr,alpha,
+     *           r95,pod,d,azmth,iflh,ierr)
 
       if (ierr.ne.0)goto 990
       if (iflg.ne.7)return
@@ -245,7 +272,8 @@ c  invalid jt='y' vntk; set pod,wr and or d to zero and return
  990  if (ifhflg.eq.1.and.ierr.eq.10)goto 991
       if (ifgflg.eq.1.and.ierr.eq.2)goto 991
 
-      call errmsg(ierr,iv,jjt,kf,yld,cep,hob1,r95,d,wr,pod,iflg)
+      call errmsg(ierr,iv,jjt,kf,yld,scr,sdr,shob,rcd,rch,rdh,
+     *            hob1,r95,d,wr,pod,iflg)
       return
 
  991  if (iflg.eq.5.or.iflg.eq.6)d    = zero
