@@ -9,7 +9,10 @@
       include 'cdkwr.h'
 
       namelist /plst/ ivn,jti,kfi,yld,
-     *  sig_cr,sig_dr,sig_hob,rho_cr_dr,rho_cr_hob,rho_dr_hob,az,fname
+     *  cep,az,fname
+
+      namelist /covlst/ sig_cr,sig_dr,sig_hob,
+     *                  rho_cr_dr,rho_cr_hob,rho_dr_hob
 
       lin  =  1
       lout =  6
@@ -24,15 +27,17 @@
 
       yld  =     1.0d0
 
-      sig_cr     = 0.0d0
-      sig_dr     = 0.0d0
-      sig_hob    = 0.0d0
-      rho_cr_dr  = 0.0d0
-      rho_cr_hob = 0.0d0
-      rho_dr_hob = 0.0d0
-      r95        = 0.0000002d0
+      cep  = 0.0d0
+      r95  = 0.0000002d0
 
       az   = 0.0d0
+
+      sig_cr    = 0.0d0
+      sig_dr    = 0.0d0
+      sig_hob   = 0.0d0
+      rho_cr_dr = 0.0d0
+      rho_cr_hob= 0.0d0
+      rho_dr_hob= 0.0d0
 
       iflg = 2
 
@@ -54,7 +59,13 @@
 
       open (unit=lin,status='old',file=inpname)
       read(lin,nml=plst)
+      read(lin,nml=covlst,err=997,end=997)
+ 997  continue
       close (unit=lin)
+
+c  convert sig_cr, sig_dr from km to feet
+      sig_cr = sig_cr * ckm2ft
+      sig_dr = sig_dr * ckm2ft
 
       open (unit=lout,status='unknown',file='lout.out')
 
@@ -77,9 +88,13 @@ c  need to convert dx to NMi
       wr  = 0.0d0
       pod = 0.0d0
 
-      call pdcalc(ivn,jti,kfi,yld,hob,r95,sig_cr,sig_dr,
-     *            sig_hob,rho_cr_dr,rho_cr_hob,rho_dr_hob,
-     *            d,wr,pod,iflg,az)
+      if (sig_cr .gt. 0.0d0 .or. sig_dr .gt. 0.0d0) then
+         call pdcov(ivn,jti,kfi,yld,hob,r95,sig_cr,sig_dr,sig_hob,
+     *              rho_cr_dr,rho_cr_hob,rho_dr_hob,d,wr,pod,iflg,az)
+      else
+         call pdcalc(ivn,jti,kfi,yld,hob,r95,cep,
+     *               d,wr,pod,iflg,az)
+      endif
 
       write(16,10)hob,dx,wr,pod
 

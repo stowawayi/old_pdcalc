@@ -277,6 +277,78 @@ Additional specialized drivers. See `drv5.nml` through `drv8.nml` for their resp
 
 **Ground Range (GR):** Horizontal distance from the detonation point directly above ground zero (DGZ) to the target.
 
+---
+
+## Covariance Delivery Error Mode
+
+In addition to the original scalar CEP input, a 3×3 delivery error covariance mode is available. It models anisotropic weapon accuracy and correlated HOB error without changing any existing input files.
+
+### Overview
+
+The covariance mode is activated by supplying an optional `/covlst/` namelist **after** the standard `/plst/` namelist in the input file. If `/covlst/` is absent, or if `sig_cr` and `sig_dr` are both zero, the driver falls back to the original CEP path (`pdcalc` → `lncalc`) with no change in behavior.
+
+When `sig_cr > 0` or `sig_dr > 0`, the driver calls `pdcov` instead of `pdcalc`. `pdcov` dispatches to `lncov`, which performs a 125-point (5×5×5) Gauss-Hermite quadrature over the full 3×3 covariance.
+
+### Coordinate frame
+
+Errors are specified in the **weapon delivery frame**:
+
+| Axis | Description |
+|------|-------------|
+| Cross-range (`sig_cr`) | Perpendicular to the flight path in the horizontal plane |
+| Down-range (`sig_dr`) | Along the flight path in the horizontal plane |
+| HOB (`sig_hob`) | Vertical (altitude) |
+
+For ICBMs/SLBMs this frame is aligned with atmospheric reentry at approximately 300,000 ft.
+
+### `/covlst/` namelist parameters
+
+| Parameter | Units | Description |
+|-----------|-------|-------------|
+| `sig_cr` | km | Cross-range delivery 1-sigma (converted to feet internally) |
+| `sig_dr` | km | Down-range delivery 1-sigma (converted to feet internally) |
+| `sig_hob` | feet | HOB delivery 1-sigma |
+| `rho_cr_dr` | — | Cross-range / down-range correlation (−1 to +1) |
+| `rho_cr_hob` | — | Cross-range / HOB correlation (−1 to +1) |
+| `rho_dr_hob` | — | Down-range / HOB correlation (−1 to +1) |
+
+**Driver 4 exception:** `sig_cr` is read from the missile data file (one column per missile). The `/covlst/` namelist uses `sig_dr_ratio` instead of `sig_cr`:
+
+| Parameter | Units | Description |
+|-----------|-------|-------------|
+| `sig_dr_ratio` | — | `sig_dr = sig_cr × sig_dr_ratio`; set > 0 to activate covariance path |
+| `sig_hob` | feet | HOB delivery 1-sigma |
+| `rho_cr_dr` | — | Cross-range / down-range correlation |
+| `rho_cr_hob` | — | Cross-range / HOB correlation |
+| `rho_dr_hob` | — | Down-range / HOB correlation |
+
+### Example input file
+
+```fortran
+ &plst
+  ivn=10, jti='p', kfi='0',
+  yld=550.0, r95=0.1, cep=0.0,
+  hob0=0.0, hob1=5000.0, dhob=100.0,
+  d0=0.0, d1=1.5, nd=64, az=0.0
+ /
+ &covlst
+  sig_cr=0.150, sig_dr=0.100, sig_hob=150.0,
+  rho_cr_dr=0.0, rho_cr_hob=0.0, rho_dr_hob=0.0
+ /
+```
+
+`sig_cr` and `sig_dr` are in km; the driver converts them to feet. `sig_hob` is in feet. All correlation values default to 0 if omitted. The `/plst/` `cep` value is ignored when the covariance path is active.
+
+### Algorithm summary
+
+1. HOB sensitivity `α = d(WR)/d(HOB)` computed by central difference of two `wrcalc` calls
+2. Conditional horizontal covariance via Schur complement: `Σ_h|z = Σ_h − b bᵀ / σ²_hob`
+3. Eigendecompose 2×2 conditional covariance into independent principal axes
+4. Triple 5-point Gauss-Hermite quadrature: outer = HOB (or single pass if `sig_hob=0`), inner = 2D horizontal eigenbasis
+5. Target size `r95` added isotropically: `0.231 × r95²` on both horizontal diagonal terms
+
+---
+
 ## Documentation
 
 Reference documentation is included in the repository:

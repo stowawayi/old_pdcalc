@@ -25,13 +25,8 @@
 
       yld  =     1.0d0
 
-      sig_cr     = 0.0d0
-      sig_dr     = 0.0d0
-      sig_hob    = 0.0d0
-      rho_cr_dr  = 0.0d0
-      rho_cr_hob = 0.0d0
-      rho_dr_hob = 0.0d0
-      r95        = 0.0000002d0
+      cep  = 0.0d0
+      r95  = 0.0000002d0
 
       az   = 0.0d0
 
@@ -59,8 +54,7 @@
             wr   = 0.0d0
             offnm = off / cnm2ft
 
-            call pdcalc(ivn,jti,kfi,yld,hob,r95,sig_cr,sig_dr,
-     *                  sig_hob,rho_cr_dr,rho_cr_hob,rho_dr_hob,
+            call pdcalc(ivn,jti,kfi,yld,hob,r95,cep,
      *                  offnm,wr,pod,iflg,az)
 
             ovp = overp(off,hob,yld)

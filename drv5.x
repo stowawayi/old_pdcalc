@@ -8,8 +8,10 @@
       include 'cdkwr.h'
 
       namelist /plst/ ivn,jti,kfi,yld,r95b,r95e,r95s,
-     *  sig_cr,sig_dr,sig_hob,rho_cr_dr,rho_cr_hob,rho_dr_hob,
-     *  az,hob0,hob1,dhob
+     *  cep,az,hob0,hob1,dhob
+
+      namelist /covlst/ sig_cr,sig_dr,sig_hob,
+     *                  rho_cr_dr,rho_cr_hob,rho_dr_hob
 
       lin  =  1
       lout =  6
@@ -27,17 +29,19 @@
       hob1 = 10000.0d0
       dhob =    10.0d0
 
-      r95b       =  0.0d0
-      r95e       = 10.0d0
-      r95s       =  0.50d0
-      sig_cr     = 0.0d0
-      sig_dr     = 0.0d0
-      sig_hob    = 0.0d0
-      rho_cr_dr  = 0.0d0
-      rho_cr_hob = 0.0d0
-      rho_dr_hob = 0.0d0
+      r95b  =  0.0d0
+      r95e  = 10.0d0
+      r95s  =  0.50d0
+      cep   = 0.0d0
 
       az   = 0.0d0
+
+      sig_cr    = 0.0d0
+      sig_dr    = 0.0d0
+      sig_hob   = 0.0d0
+      rho_cr_dr = 0.0d0
+      rho_cr_hob= 0.0d0
+      rho_dr_hob= 0.0d0
 
       iflg = 2
 
@@ -57,7 +61,13 @@
 
       open (unit=lin,status='old',file=fname)
       read(lin,nml=plst)
+      read(lin,nml=covlst,err=997,end=997)
+ 997  continue
       close (unit=lin)
+
+c  convert sig_cr, sig_dr from km to feet
+      sig_cr = sig_cr * ckm2ft
+      sig_dr = sig_dr * ckm2ft
 
       open (unit=lout,status='unknown',file='lout.out')
 
@@ -76,13 +86,18 @@
             wr  = 0.0d0
             pod = 0.0d0
 
-            call pdcalc(ivn,jti,kfi,yld,hob,r95,sig_cr,sig_dr,
-     *                  sig_hob,rho_cr_dr,rho_cr_hob,rho_dr_hob,
-     *                  d,wr,pod,iflg,az)
+            if (sig_cr .gt. 0.0d0 .or. sig_dr .gt. 0.0d0) then
+               call pdcov(ivn,jti,kfi,yld,hob,r95,sig_cr,sig_dr,
+     *                    sig_hob,rho_cr_dr,rho_cr_hob,rho_dr_hob,
+     *                    d,wr,pod,iflg,az)
+            else
+               call pdcalc(ivn,jti,kfi,yld,hob,r95,cep,
+     *                     d,wr,pod,iflg,az)
+            endif
 
              if (pod.gt.0.0d0) then
                 nout = nout + 1
-                write(16,10)hob,r95,sig_cr,wr,pod
+                write(16,10)hob,r95,cep,wr,pod
              endif
 
              r95 = r95 + r95s

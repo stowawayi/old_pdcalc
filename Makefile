@@ -5,13 +5,16 @@ OBJECTS=	main.o \
 		dypres.o \
 		eigen2x2.o \
 		errmsg.o \
+		errmsgcov.o \
 		etcalc.o \
+		etcov.o \
 		intgf.o \
 		lncalc.o \
 		lncov.o \
 		ogh.o \
 		overp.o \
 		pdcalc.o \
+		pdcov.o \
 		pvuln.o \
 		ranf.o \
 		wrcalc.o \
@@ -37,13 +40,16 @@ main.o:	main.for\
 	dypres.f \
 	eigen2x2.f \
 	errmsg.f \
+	errmsgcov.f \
 	etcalc.f \
+	etcov.f \
 	intgf.f \
 	lncalc.f \
 	lncov.f \
 	ogh.f \
 	overp.f \
 	pdcalc.f \
+	pdcov.f \
 	pvuln.f \
 	ranf.f \
 	wrcalc.f \
@@ -74,7 +80,13 @@ dypres.o:	dypres.f \
 errmsg.o:	errmsg.f
 	$(F77) $(INCLUDES) $(FLAGS) -c $<
 
+errmsgcov.o:	errmsgcov.f
+	$(F77) $(INCLUDES) $(FLAGS) -c $<
+
 etcalc.o:	etcalc.f
+	$(F77) $(INCLUDES) $(FLAGS) -c $<
+
+etcov.o:	etcov.f
 	$(F77) $(INCLUDES) $(FLAGS) -c $<
 
 intgf.o:	intgf.f
@@ -103,6 +115,9 @@ overp.o:	overp.f\
 	$(F77) $(INCLUDES) $(FLAGS) -c $<
 
 pdcalc.o:	pdcalc.f
+	$(F77) $(INCLUDES) $(FLAGS) -c $<
+
+pdcov.o:	pdcov.f
 	$(F77) $(INCLUDES) $(FLAGS) -c $<
 
 ranf.o:	ranf.f\

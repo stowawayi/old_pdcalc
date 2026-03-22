@@ -34,13 +34,19 @@ set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} ${compiler_flags}")
 set(LIB_SOURCES
     acon.f
     dypres.f
+    eigen2x2.f
     errmsg.f
+    errmsgcov.f
     etcalc.f
+    etcov.f
     intgf.f
     lncalc.f
+    lncov.f
     ogh.f
     overp.f
     pdcalc.f
+    pdcov.f
+    pvuln.f
     ranf.f
     wrcalc.f
     wrclcy.f

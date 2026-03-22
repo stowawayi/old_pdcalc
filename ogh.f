@@ -1,5 +1,4 @@
-      subroutine ogh(ivn,jti,kfi,yld,r95,scr,sdr,shob,rcd,rch,rdh,
-     *               az,podd,ohob,ogrn)
+      subroutine ogh(ivn,jti,kfi,yld,r95,cep,az,podd,ohob,ogrn)
 
 c  given a vntk, yield, r95 and cep determine the 'optimum' 
 c  height of burst. that is height of burst which give then
@@ -55,8 +54,8 @@ c  first x1
             wr   = 0.0d0
             pod1 = 0.0d0
 
-            call pdcalc(ivn,jti,kfi,yld,hob,r95,scr,sdr,shob,rcd,rch,
-     *               rdh,offnm,wr,pod1,iflg,az)
+            call pdcalc(ivn,jti,kfi,yld,hob,r95,cep,offnm,
+     *               wr,pod1,iflg,az)
 
             if (pod1.ge.podd.and.ierr.eq.0) then
                x1 = offx
@@ -77,8 +76,8 @@ c  first x2
             wr   = 0.0d0
             pod2 = 0.0d0
 
-            call pdcalc(ivn,jti,kfi,yld,hob,r95,scr,sdr,shob,rcd,rch,
-     *               rdh,offnm,wr,pod2,iflg,az)
+            call pdcalc(ivn,jti,kfi,yld,hob,r95,cep,offnm,
+     *               wr,pod2,iflg,az)
 
             if (pod2.lt.podd.and.ierr.eq.0) then
                x2 = offx
@@ -93,15 +92,15 @@ c  now iterate to solution (ridders method)
  102     offnm = x1 / 6076.115d0
          wr  = 0.0d0
          pod = 0.0d0
-         call pdcalc(ivn,jti,kfi,yld,hob,r95,scr,sdr,shob,rcd,rch,
-     *               rdh,offnm,wr,pod,iflg,az)
+         call pdcalc(ivn,jti,kfi,yld,hob,r95,cep,offnm,
+     *               wr,pod,iflg,az)
          fl = pod - podd
 
          offnm = x2 / 6076.115d0
          wr  = 0.0d0
          pod = 0.0d0
-         call pdcalc(ivn,jti,kfi,yld,hob,r95,scr,sdr,shob,rcd,rch,
-     *               rdh,offnm,wr,pod,iflg,az)
+         call pdcalc(ivn,jti,kfi,yld,hob,r95,cep,offnm,
+     *               wr,pod,iflg,az)
          fh = pod - podd
 
 c  left out check for fl being negative as the above always makes
@@ -125,8 +124,8 @@ c  fl positive
             wr  = 0.0d0
             pod = 0.0d0
 
-            call pdcalc(ivn,jti,kfi,yld,hob,r95,scr,sdr,shob,rcd,rch,
-     *                  rdh,off,wr,pod,iflg,az)
+            call pdcalc(ivn,jti,kfi,yld,hob,r95,cep,off,
+     *                  wr,pod,iflg,az)
 
             f = pod - podd
 
